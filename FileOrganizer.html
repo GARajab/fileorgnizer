@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>File Organizer</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',Segoe UI,sans-serif;background:#f0f0f5;min-height:100vh;display:flex;align-items:flex-start;justify-content:center;padding:40px 16px}
+  .window{background:#fff;border-radius:14px;box-shadow:0 8px 40px rgba(0,0,0,0.13);overflow:hidden;width:100%;max-width:680px}
+  .titlebar{background:#f5f5f7;border-bottom:1px solid #e0e0e0;padding:13px 18px;display:flex;align-items:center;gap:8px;user-select:none}
+  .dot{width:12px;height:12px;border-radius:50%;flex-shrink:0}
+  .win-title{font-size:13px;font-weight:500;color:#888;flex:1;text-align:center;margin-right:60px;letter-spacing:0.01em}
+  .body{padding:28px}
+  .notice{border-radius:9px;padding:11px 14px;font-size:12.5px;line-height:1.5;margin-bottom:20px;display:flex;align-items:flex-start;gap:9px}
+  .notice svg{width:14px;height:14px;flex-shrink:0;margin-top:1px;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+  .notice-info{background:#E6F1FB;color:#185FA5}
+  .notice-info svg{stroke:#185FA5}
+  .notice-warn{background:#FAEEDA;color:#854F0B}
+  .notice-warn svg{stroke:#854F0B}
+  .notice-success{background:#EAF3DE;color:#3B6D11}
+  .notice-success svg{stroke:#3B6D11}
+  .notice-danger{background:#FCEBEB;color:#A32D2D}
+  .notice-danger svg{stroke:#A32D2D}
+  .hero{border:1.5px dashed #c0c0cc;border-radius:12px;padding:36px 20px;text-align:center;cursor:pointer;transition:background 0.18s,border-color 0.18s;margin-bottom:24px}
+  .hero:hover{background:#f7f7fa}
+  .hero.drag{background:#E6F1FB;border-color:#378ADD}
+  .hero-icon{width:52px;height:52px;margin:0 auto 14px;background:#f5f5f7;border:1px solid #e0e0e0;border-radius:13px;display:flex;align-items:center;justify-content:center}
+  .hero-icon svg{width:24px;height:24px;stroke:#888;fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+  .hero-title{font-size:15px;font-weight:600;color:#1a1a1a;margin-bottom:5px}
+  .hero-sub{font-size:13px;color:#888;line-height:1.5;margin-bottom:16px}
+  .chip{display:inline-flex;align-items:center;gap:6px;padding:7px 16px;border:1px solid #d0d0d8;border-radius:8px;font-size:13px;color:#1a1a1a;background:#fff;cursor:pointer;transition:background 0.15s;font-family:inherit}
+  .chip:hover{background:#f5f5f7}
+  .chip svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+  .section-header{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:10px}
+  .section-label{font-size:11px;font-weight:600;color:#aaa;letter-spacing:0.06em;text-transform:uppercase}
+  .section-meta{font-size:12px;color:#aaa}
+  .cats{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px;margin-bottom:24px}
+  .cat{background:#f7f7fa;border:1px solid #e8e8ec;border-radius:10px;padding:12px 10px 10px;text-align:center}
+  .cat-icon{width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;margin:0 auto 8px;border:1px solid transparent}
+  .cat-icon svg{width:16px;height:16px;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+  .cat-name{font-size:12px;font-weight:600;color:#1a1a1a;margin-bottom:2px}
+  .cat-cnt{font-size:11px;color:#888}
+  .divider{height:1px;background:#f0f0f0;margin:20px 0}
+  .flist{border:1px solid #eee;border-radius:10px;overflow:hidden;margin-bottom:20px;max-height:260px;overflow-y:auto}
+  .frow{display:flex;align-items:center;gap:10px;padding:9px 14px;border-bottom:1px solid #f5f5f5;font-size:13px}
+  .frow:last-child{border-bottom:none}
+  .frow:hover{background:#fafafa}
+  .frow-icon{width:28px;height:28px;border-radius:7px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .frow-icon svg{width:13px;height:13px;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+  .frow-name{flex:1;color:#1a1a1a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:13px}
+  .frow-ext{font-size:11px;color:#bbb;font-family:monospace;margin-right:4px}
+  .badge{font-size:11px;padding:3px 9px;border-radius:6px;font-weight:600;flex-shrink:0}
+  .actions{display:flex;gap:10px}
+  .btn-main{flex:1;padding:10px;background:#185FA5;color:white;border:none;border-radius:9px;font-size:14px;font-weight:600;cursor:pointer;letter-spacing:0.01em;transition:background 0.15s;font-family:inherit}
+  .btn-main:hover{background:#0C447C}
+  .btn-main:disabled{background:#e8e8ec;color:#aaa;cursor:not-allowed}
+  .btn-ghost{padding:10px 16px;background:transparent;color:#555;border:1px solid #d0d0d8;border-radius:9px;font-size:14px;cursor:pointer;transition:background 0.15s;font-family:inherit}
+  .btn-ghost:hover{background:#f5f5f7}
+  .prog-wrap{margin-top:16px}
+  .prog-track{height:4px;background:#f0f0f0;border-radius:2px;overflow:hidden;margin-bottom:8px}
+  .prog-fill{height:100%;background:#185FA5;border-radius:2px;transition:width 0.25s}
+  .prog-row{display:flex;justify-content:space-between;align-items:center}
+  .prog-label{font-size:12px;color:#888}
+  .prog-pct{font-size:12px;font-weight:600;color:#1a1a1a}
+  .browser-warning{display:none}
+  @media(max-width:480px){.body{padding:18px}.cats{grid-template-columns:repeat(3,1fr)}}
+</style>
+</head>
+<body>
+
+<div class="window">
+  <div class="titlebar">
+    <div class="dot" style="background:#FF5F57"></div>
+    <div class="dot" style="background:#FFBD2E"></div>
+    <div class="dot" style="background:#28CA41"></div>
+    <div class="win-title">File Organizer</div>
+  </div>
+  <div class="body">
+
+    <div class="notice notice-warn browser-warning" id="browserWarn">
+      <svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      <span>This app requires <strong>Google Chrome</strong> or <strong>Microsoft Edge</strong>. Firefox and Safari do not support the folder access API needed to move files.</span>
+    </div>
+
+    <div class="notice notice-info" id="infoNotice">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      <span>Your files stay on your computer — nothing is uploaded anywhere. Grant folder access when your browser asks.</span>
+    </div>
+
+    <div class="hero" id="hero" onclick="pickFolder()">
+      <div class="hero-icon">
+        <svg viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+      </div>
+      <div class="hero-title">Choose a folder to organize</div>
+      <div class="hero-sub">Files will be automatically sorted into subfolders by type.<br>Drag a folder here, or click below to browse.</div>
+      <button class="chip">
+        <svg viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+        Browse folder
+      </button>
+    </div>
+
+    <div id="preview" style="display:none">
+      <div class="section-header">
+        <span class="section-label">Destination folders</span>
+        <span class="section-meta" id="totalCount"></span>
+      </div>
+      <div class="cats" id="catGrid"></div>
+
+      <div class="divider"></div>
+
+      <div class="section-header">
+        <span class="section-label">Files to move</span>
+        <span class="section-meta" id="listMeta"></span>
+      </div>
+      <div class="flist" id="fileList"></div>
+
+      <div class="actions">
+        <button class="btn-ghost" onclick="reset()">Reset</button>
+        <button class="btn-main" id="organizeBtn" onclick="organize()">Organize files</button>
+      </div>
+
+      <div class="prog-wrap" id="progWrap" style="display:none">
+        <div class="prog-track"><div class="prog-fill" id="progFill" style="width:0%"></div></div>
+        <div class="prog-row">
+          <span class="prog-label" id="progLabel">Organizing…</span>
+          <span class="prog-pct" id="progPct">0%</span>
+        </div>
+      </div>
+
+      <div id="successNotice" class="notice notice-success" style="display:none;margin-top:16px;margin-bottom:0">
+        <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+        <span id="successText"></span>
+      </div>
+      <div id="errorNotice" class="notice notice-danger" style="display:none;margin-top:16px;margin-bottom:0">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <span id="errorText"></span>
+      </div>
+    </div>
+
+    <div id="emptyState" style="display:none;text-align:center;padding:24px 0;font-size:13px;color:#aaa">
+      No files found in this folder — it may already be organized.
+    </div>
+
+  </div>
+</div>
+
+<script>
+const CATS = {
+  'PDFs':     { exts:['pdf'], color:'#FCEBEB', stroke:'#E24B4A', ic:'#A32D2D', folder:'PDFs',
+    svg:'<rect x="4" y="2" width="16" height="20" rx="2"/><line x1="9" y1="9" x2="15" y2="9"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="11" y2="17"/>' },
+  'Images':   { exts:['jpg','jpeg','png','gif','bmp','webp','svg','heic','tiff','raw','ico','avif'], color:'#E6F1FB', stroke:'#378ADD', ic:'#185FA5', folder:'Images',
+    svg:'<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>' },
+  'Word':     { exts:['doc','docx','odt','rtf','pages'], color:'#E6F1FB', stroke:'#185FA5', ic:'#0C447C', folder:'Word Files',
+    svg:'<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/>' },
+  'Excel':    { exts:['xls','xlsx','csv','ods','numbers','tsv'], color:'#EAF3DE', stroke:'#639922', ic:'#3B6D11', folder:'Excel & Spreadsheets',
+    svg:'<rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="12" y1="3" x2="12" y2="21"/>' },
+  'Slides':   { exts:['ppt','pptx','key','odp'], color:'#FAEEDA', stroke:'#EF9F27', ic:'#854F0B', folder:'Slides',
+    svg:'<rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>' },
+  'Videos':   { exts:['mp4','mov','avi','mkv','wmv','m4v','webm','flv','vob','3gp'], color:'#EEEDFE', stroke:'#7F77DD', ic:'#534AB7', folder:'Videos',
+    svg:'<polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/>' },
+  'Audio':    { exts:['mp3','wav','aac','flac','m4a','ogg','wma','aiff','opus','alac'], color:'#FBEAF0', stroke:'#D4537E', ic:'#993556', folder:'Audio',
+    svg:'<path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>' },
+  'Archives': { exts:['zip','rar','7z','tar','gz','bz2','dmg','iso','pkg','cab'], color:'#FAEEDA', stroke:'#BA7517', ic:'#854F0B', folder:'Archives',
+    svg:'<polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/>' },
+  'Code':     { exts:['js','ts','py','java','c','cpp','h','cs','php','rb','go','rs','swift','html','css','json','xml','sh','yaml','yml','md','sql','vue','jsx','tsx','dart','kt'], color:'#E1F5EE', stroke:'#1D9E75', ic:'#0F6E56', folder:'Code',
+    svg:'<polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>' },
+  'Other':    { exts:[], color:'#F1EFE8', stroke:'#888780', ic:'#5F5E5A', folder:'Other Files',
+    svg:'<path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="13 2 13 9 20 9"/>' },
+};
+
+let rootDir = null, filesToMove = [];
+
+function getExt(n){ const p=n.split('.'); return p.length>1?p.pop().toLowerCase():'' }
+function getCat(ext){ for(const[k,c]of Object.entries(CATS)){ if(k!=='Other'&&c.exts.includes(ext))return k } return 'Other' }
+
+window.addEventListener('DOMContentLoaded', () => {
+  const ua = navigator.userAgent;
+  const supported = /Chrome\//.test(ua)||/Edg\//.test(ua);
+  if(!supported || !('showDirectoryPicker' in window)){
+    document.getElementById('browserWarn').style.display='flex';
+    document.getElementById('hero').style.pointerEvents='none';
+    document.getElementById('hero').style.opacity='0.5';
+  }
+});
+
+async function pickFolder(){
+  try{
+    const h = await window.showDirectoryPicker({mode:'readwrite'});
+    rootDir = h; await scan(h);
+  } catch(e){ if(e.name!=='AbortError') showError('Could not open folder: '+e.message) }
+}
+
+async function scan(dir){
+  filesToMove=[];
+  for await(const[name,h]of dir.entries()){
+    if(h.kind==='file'&&!name.startsWith('.')){
+      const ext=getExt(name); filesToMove.push({name,handle:h,ext,cat:getCat(ext)});
+    }
+  }
+  if(!filesToMove.length){ document.getElementById('emptyState').style.display='block'; return }
+  renderPreview();
+}
+
+function renderPreview(){
+  const counts={};
+  for(const f of filesToMove) counts[f.cat]=(counts[f.cat]||0)+1;
+
+  document.getElementById('totalCount').textContent = filesToMove.length+' file'+(filesToMove.length!==1?'s':'');
+
+  const grid=document.getElementById('catGrid'); grid.innerHTML='';
+  for(const[name,c]of Object.entries(CATS)){
+    if(!counts[name]) continue;
+    grid.innerHTML+=`<div class="cat">
+      <div class="cat-icon" style="background:${c.color};border-color:${c.stroke}33">
+        <svg viewBox="0 0 24 24" style="width:16px;height:16px;fill:none;stroke:${c.ic};stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round">${c.svg}</svg>
+      </div>
+      <div class="cat-name">${name}</div>
+      <div class="cat-cnt">${counts[name]} file${counts[name]!==1?'s':''}</div>
+    </div>`;
+  }
+
+  const shown=filesToMove.slice(0,100);
+  document.getElementById('listMeta').textContent=filesToMove.length>100?`showing 100 of ${filesToMove.length}`:'';
+  const list=document.getElementById('fileList'); list.innerHTML='';
+  for(const f of shown){
+    const c=CATS[f.cat];
+    list.innerHTML+=`<div class="frow">
+      <div class="frow-icon" style="background:${c.color}">
+        <svg viewBox="0 0 24 24" style="stroke:${c.ic}">${c.svg}</svg>
+      </div>
+      <span class="frow-name">${f.name}</span>
+      <span class="frow-ext">${f.ext?'.'+f.ext:''}</span>
+      <span class="badge" style="background:${c.color};color:${c.ic}">${c.folder}</span>
+    </div>`;
+  }
+  if(filesToMove.length>100) list.innerHTML+=`<div class="frow"><span style="font-size:12px;color:#bbb">…and ${filesToMove.length-100} more files</span></div>`;
+
+  document.getElementById('hero').style.display='none';
+  document.getElementById('infoNotice').style.display='none';
+  document.getElementById('emptyState').style.display='none';
+  document.getElementById('successNotice').style.display='none';
+  document.getElementById('errorNotice').style.display='none';
+  document.getElementById('progWrap').style.display='none';
+  document.getElementById('organizeBtn').disabled=false;
+  document.getElementById('preview').style.display='block';
+}
+
+async function organize(){
+  document.getElementById('organizeBtn').disabled=true;
+  document.getElementById('progWrap').style.display='block';
+  document.getElementById('successNotice').style.display='none';
+  document.getElementById('errorNotice').style.display='none';
+  let done=0, errors=[];
+
+  for(const f of filesToMove){
+    try{
+      const destDir=await rootDir.getDirectoryHandle(CATS[f.cat].folder,{create:true});
+      const buf=await(await f.handle.getFile()).arrayBuffer();
+      let n=f.name, counter=1;
+      while(true){
+        try{ await destDir.getFileHandle(n); const p=f.name.split('.'); const e=p.length>1?'.'+p.pop():''; n=p.join('.')+` (${counter++})`+e }
+        catch{ break }
+      }
+      const w=await(await destDir.getFileHandle(n,{create:true})).createWritable();
+      await w.write(buf); await w.close();
+      await rootDir.removeEntry(f.name);
+      done++;
+      const pct=Math.round(done/filesToMove.length*100);
+      document.getElementById('progFill').style.width=pct+'%';
+      document.getElementById('progLabel').textContent=`Moving file ${done} of ${filesToMove.length}…`;
+      document.getElementById('progPct').textContent=pct+'%';
+    } catch(e){ errors.push(f.name+': '+e.message) }
+  }
+
+  document.getElementById('progLabel').textContent='Complete';
+  document.getElementById('progPct').textContent='100%';
+  const catCount=document.getElementById('catGrid').children.length;
+  if(!errors.length){
+    const n=document.getElementById('successNotice'); n.style.display='flex';
+    document.getElementById('successText').textContent=`${done} file${done!==1?'s':''} organized into ${catCount} folder${catCount!==1?'s':''} successfully.`;
+  } else {
+    const n=document.getElementById('errorNotice'); n.style.display='flex';
+    document.getElementById('errorText').textContent=`Moved ${done} files. ${errors.length} error(s): ${errors.slice(0,2).join('; ')}`;
+  }
+}
+
+function reset(){
+  rootDir=null; filesToMove=[];
+  document.getElementById('preview').style.display='none';
+  document.getElementById('emptyState').style.display='none';
+  document.getElementById('hero').style.display='block';
+  document.getElementById('infoNotice').style.display='flex';
+  document.getElementById('successNotice').style.display='none';
+  document.getElementById('errorNotice').style.display='none';
+}
+
+function showError(msg){
+  const n=document.getElementById('errorNotice'); n.style.display='flex';
+  document.getElementById('errorText').textContent=msg;
+}
+
+const hero=document.getElementById('hero');
+hero.addEventListener('dragover',e=>{e.preventDefault();hero.classList.add('drag')});
+hero.addEventListener('dragleave',()=>hero.classList.remove('drag'));
+hero.addEventListener('drop',async e=>{
+  e.preventDefault(); hero.classList.remove('drag');
+  for(const item of [...e.dataTransfer.items]){
+    if(item.kind==='file'){
+      try{ const h=await item.getAsFileSystemHandle(); if(h.kind==='directory'){rootDir=h;await scan(h);return} }catch{}
+    }
+  }
+  showError('Please drop a folder, not individual files.');
+});
+</script>
+</body>
+</html>
